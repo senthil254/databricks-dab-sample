@@ -1,0 +1,31 @@
+name: Deploy bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "dev, prod or both"
+        required: true
+        default: dev
+        type: choice
+        options: [dev, prod, both]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(inputs.target == 'both' && '["dev","prod"]' || format('["{0}"]', inputs.target)) }}
+    name: deploy-${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+
+      - name: Validate, deploy and run (${{ matrix.target }})
+        env:
+          DATABRICKS_TOKEN: ${{ matrix.target == 'prod' && secrets.PROD_TOKEN || secrets.DEV_TOKEN }}
+        run: |
+          databricks bundle validate -t ${{ matrix.target }}
+          databricks bundle deploy -t ${{ matrix.target }}
+          databricks bundle run dab_demo_project_job -t ${{ matrix.target }}
