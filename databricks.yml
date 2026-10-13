@@ -1,0 +1,29 @@
+# dab_v1 - Option 2: each target pinned to a profile in DATABRICKS_CONFIG_FILE
+bundle:
+  name: dab_demo_project
+
+resources:
+  jobs:
+    dab_demo_project_job:
+      name: dab_demo_project_job
+      tasks:
+        - task_key: dab_demo_notebook
+          notebook_task:
+            notebook_path: ./src/dab_demo_notebook.py
+          # no cluster -> serverless jobs compute
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      host: https://dbc-ad36364a-b414.cloud.databricks.com
+      profile: dev
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-1f291616-ab3f.cloud.databricks.com
+      profile: prod
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: ${workspace.current_user.userName}
